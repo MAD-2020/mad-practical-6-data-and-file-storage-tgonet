@@ -28,6 +28,10 @@ public class Main3Activity extends AppCompatActivity {
     private static final String FILENAME = "Main3Activity.java";
     private static final String TAG = "Whack-A-Mole3.0!";
 
+    RecyclerView rv;
+    Button Backtologin;
+    CustomScoreAdaptor adapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +42,23 @@ public class Main3Activity extends AppCompatActivity {
 
         Log.v(TAG, FILENAME + ": Show level for User: "+ userName);
          */
+
+        String username = getIntent().getStringExtra("username");
+
+        MyDBHandler myDBHandler = new MyDBHandler(this,null,null,1);
+        UserData userData = myDBHandler.findUser(username);
+        rv = findViewById(R.id.rv);
+        Backtologin = findViewById(R.id.Back_to_Login);
+        adapter = new CustomScoreAdaptor(userData,this);
+        rv.setLayoutManager(new LinearLayoutManager(this));
+        rv.setAdapter(adapter);
+
+        Backtologin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(Main3Activity.this,MainActivity.class));
+            }
+        });
     }
 
     @Override

@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class CustomScoreViewHolder extends RecyclerView.ViewHolder {
@@ -13,6 +14,8 @@ public class CustomScoreViewHolder extends RecyclerView.ViewHolder {
      */
     private static final String FILENAME = "CustomScoreViewHolder.java";
     private static final String TAG = "Whack-A-Mole3.0!";
+    TextView leveltext,scoretext;
+    CardView cardView;
 
     public CustomScoreViewHolder(final View itemView){
         super(itemView);
@@ -20,5 +23,9 @@ public class CustomScoreViewHolder extends RecyclerView.ViewHolder {
         /* Hint:
         This method dictates the viewholder contents and links the widget to the objects for manipulation.
          */
+
+        leveltext = itemView.findViewById(R.id.Leveltext);
+        scoretext = itemView.findViewById(R.id.Scoretext);
+        cardView = itemView.findViewById(R.id.cardview);
     }
 }

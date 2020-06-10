@@ -5,12 +5,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.TestLooperManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -32,6 +34,12 @@ public class Main4Activity extends AppCompatActivity {
             e. Each location of the mole is randomised.
         4. There is an option return to the login page.
      */
+    TextView Score2;
+    int advancedScore;
+    Button[] buttons;
+    int level;
+    Button Back;
+    String username;
     private static final String FILENAME = "Main4Activity.java";
     private static final String TAG = "Whack-A-Mole3.0!";
     CountDownTimer readyTimer;
@@ -47,6 +55,26 @@ public class Main4Activity extends AppCompatActivity {
             belongs here.
             This timer countdown from 10 seconds to 0 seconds and stops after "GO!" is shown.
          */
+
+        readyTimer = new CountDownTimer(10000,1000){
+            @Override
+            public void onTick(long l) {
+                Toast.makeText(Main4Activity.this,"Get ready in " + String.valueOf(l/1000) + " seconds",Toast.LENGTH_SHORT).show();
+                Log.v(TAG,  FILENAME + "Ready CountDown!" + String.valueOf(l/1000)) ;
+            }
+
+            @Override
+            public void onFinish() {
+                Toast.makeText(Main4Activity.this,"Go!",Toast.LENGTH_SHORT).show();
+                Log.v(TAG, FILENAME + "Ready CountDown Complete!");
+                placeMoleTimer();
+                Back.setEnabled(true);
+                for(Button i : buttons){
+                    i.setEnabled(true);
+                }
+            }
+
+        }.start();
     }
     private void placeMoleTimer(){
         /* HINT:
@@ -56,6 +84,17 @@ public class Main4Activity extends AppCompatActivity {
            belongs here.
            This is an infinite countdown timer.
          */
+        int interval = 11000 - getIntent().getIntExtra("level",0)*1000;
+        newMolePlaceTimer = new CountDownTimer(interval,interval){
+            @Override
+            public void onTick(long l) {
+                setNewMole();
+            }
+            @Override
+            public void onFinish() {
+                placeMoleTimer();
+            }
+        }.start();
     }
     private static final int[] BUTTON_IDS = {
             /* HINT:
@@ -75,6 +114,48 @@ public class Main4Activity extends AppCompatActivity {
             It also prepares the back button and updates the user score to the database
             if the back button is selected.
          */
+        Back = findViewById(R.id.Back);
+        Score2 = findViewById(R.id.Score2);
+        advancedScore = getIntent().getIntExtra("score",0);
+        level = getIntent().getIntExtra("level",0);
+        username = getIntent().getStringExtra("username");
+        Score2.setText(String.valueOf(advancedScore));
+        Back.setEnabled(false);
+        buttons = new Button[9];
+        for(int i=0; i<buttons.length; i++){
+            String buttonID = "button" + (i+1);
+            int resID = getResources().getIdentifier(buttonID, "id", getPackageName());
+            buttons[i] = findViewById(resID);
+            buttons[i].setEnabled(false);
+            final int finalI = i;
+            buttons[i].setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(buttons[finalI].getText() == "*"){
+                        advancedScore++;
+                        Log.v(TAG,FILENAME + "Hit, Score added!");
+                    }
+                    else{
+                        advancedScore--;
+                        Log.v(TAG, FILENAME +"Missed, Score deducted!");
+                    }
+                    Score2.setText(String.valueOf(advancedScore));
+                }
+            });
+        }
+        Log.v(TAG, FILENAME + "Current User Score: " + advancedScore);
+
+        Back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateUserScore();
+                Intent intent = new Intent(Main4Activity.this,Main3Activity.class);
+                intent.putExtra("username",username);
+                startActivity(intent);
+                finish();
+            }
+        });
+
 
 
         for(final int id : BUTTON_IDS){
@@ -89,6 +170,8 @@ public class Main4Activity extends AppCompatActivity {
         super.onStart();
         readyTimer();
     }
+
+
     private void doCheck(Button checkButton)
     {
         /* Hint:
@@ -106,9 +189,27 @@ public class Main4Activity extends AppCompatActivity {
             Clears the previous mole location and gets a new random location of the next mole location.
             Sets the new location of the mole. Adds additional mole if the level difficulty is from 6 to 10.
          */
+        int randomLocation;
+        int randomLocation1;
         Random ran = new Random();
-        int randomLocation = ran.nextInt(9);
-
+        for(Button i : buttons){
+            i.setText("0");
+        }
+        if(level <= 5){
+            randomLocation = ran.nextInt(9);
+            buttons[randomLocation].setText("*");
+            Log.v(TAG,FILENAME + "New Mole Location");
+        }
+        else{
+            randomLocation = ran.nextInt(9);
+            randomLocation1 = ran.nextInt(9);
+            while (randomLocation == randomLocation1){
+                randomLocation1 = ran.nextInt(9);
+            }
+            buttons[randomLocation].setText("*");
+            buttons[randomLocation1].setText("*");
+            Log.v(TAG,FILENAME + "New Mole Locations");
+        }
     }
 
     private void updateUserScore()
@@ -118,8 +219,14 @@ public class Main4Activity extends AppCompatActivity {
         This updates the user score to the database if needed. Also stops the timers.
         Log.v(TAG, FILENAME + ": Update User Score...");
       */
+        Log.v(TAG, FILENAME + ": Update User Score...");
         newMolePlaceTimer.cancel();
         readyTimer.cancel();
+        MyDBHandler myDBHandler = new MyDBHandler(this,null,null,1);
+        UserData userData = myDBHandler.findUser(username);
+        myDBHandler.deleteAccount(username);
+        userData.getScores().set(level-1,advancedScore);
+        myDBHandler.addUser(userData);
     }
 
 }
